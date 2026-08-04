@@ -1,0 +1,110 @@
+//----------------------------------
+// New Report clean-session fix
+//----------------------------------
+
+(function () {
+  "use strict";
+
+  const PRE_EDIT_CART_KEY = "personnelFilterPreEditAoCartV1";
+  const WORKSPACE_DRAFT_KEY = "personnelFilterReassignmentWorkspaceDraftV1";
+  const REASSIGNMENT_KEY = "personnelFilterReassignmentV2";
+
+  function hide_(id) {
+    const element = document.getElementById(id);
+    if (element) element.hidden = true;
+  }
+
+  function clearReportFields_() {
+    [
+      "reassignmentOrderNumber",
+      "reassignmentOrderDate",
+      "reassignmentSigningOffice",
+      "reassignmentFileReference",
+    ].forEach(id => {
+      const field = document.getElementById(id);
+      if (field) field.value = "";
+    });
+
+    const role = document.getElementById("reassignmentSigningRole");
+    if (role) role.value = "CHIEF";
+
+    if (typeof ReassignmentGenerateState !== "undefined") {
+      ReassignmentGenerateState.selectedOffice = "";
+      ReassignmentGenerateState.selectedRole = "CHIEF";
+    }
+
+    if (typeof updateSigningOfficerPreview_ === "function") {
+      updateSigningOfficerPreview_();
+    }
+  }
+
+  function clearOldReportState_() {
+    // Keep PersonnelState.aoCart: these are the personnel the user just picked
+    // from the main table for the new report.
+    if (typeof ReassignmentState !== "undefined") {
+      ReassignmentState.activeOffice = "";
+      if ("activeCamp" in ReassignmentState) ReassignmentState.activeCamp = "";
+      ReassignmentState.assignments = new Map();
+      ReassignmentState.selectedKeys = new Set();
+      ReassignmentState.filters = {
+        search: "",
+        rank: "",
+        office: "",
+        camp: "",
+      };
+    }
+
+    if (typeof Stage1ReportEditorState !== "undefined") {
+      Stage1ReportEditorState.loading = false;
+      Stage1ReportEditorState.sourceReport = null;
+    }
+
+    document.getElementById("stage1RevisionBanner")?.remove();
+
+    try {
+      localStorage.removeItem(REASSIGNMENT_KEY);
+      localStorage.removeItem(PRE_EDIT_CART_KEY);
+      localStorage.removeItem(WORKSPACE_DRAFT_KEY);
+      if (typeof REASSIGNMENT_FORM_STORAGE_KEY !== "undefined") {
+        localStorage.removeItem(REASSIGNMENT_FORM_STORAGE_KEY);
+      }
+    } catch (error) {
+      console.warn("Unable to clear the previous report session:", error);
+    }
+
+    if (typeof saveAoCart_ === "function") saveAoCart_();
+    if (typeof saveReassignmentState_ === "function") saveReassignmentState_();
+    if (typeof updateAoCartCount_ === "function") updateAoCartCount_();
+    if (typeof updateReportGeneratorButton_ === "function") {
+      updateReportGeneratorButton_();
+    }
+  }
+
+  function beginNewReport_() {
+    clearOldReportState_();
+    clearReportFields_();
+
+    hide_("stage1MainReportChoiceBackdrop");
+    hide_("stage1MainReportChoiceDialog");
+
+    if (typeof openReportTypeDialog_ === "function") {
+      openReportTypeDialog_();
+    }
+  }
+
+  // This is the first New Report button opened from the main Personnel Table.
+  // It starts a fresh report session using the personnel currently selected.
+  document.addEventListener("click", event => {
+    const button = event.target.closest(
+      "#stage1MainReportChoiceDialog button[data-action='NEW']"
+    );
+    if (!button) return;
+
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    beginNewReport_();
+  }, true);
+
+  // Do not intercept #stage1HardChoiceDialog [data-mode='NEW'].
+  // Its native handler must continue to the final report details dialog.
+})();

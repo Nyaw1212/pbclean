@@ -1,0 +1,220 @@
+//----------------------------------
+// Step 2 independent Camp + Office destination options
+//----------------------------------
+
+(function () {
+  const CAMPS = ["NBP", "MAXIMUM", "MEDIUM", "MINIMUM", "RDC"];
+
+  function ensureDestinationGroups_() {
+    const panel = document.querySelector(".reassignment-destination-panel");
+    const officeContainer = document.getElementById("destinationOfficeChips");
+    if (!panel || !officeContainer) return false;
+
+    if (!document.getElementById("destinationCampChips")) {
+      const campLabel = document.createElement("label");
+      campLabel.className = "destination-group-label";
+      campLabel.textContent = "Camp";
+
+      const campContainer = document.createElement("div");
+      campContainer.id = "destinationCampChips";
+      campContainer.className = "destination-chip-list destination-camp-chip-list";
+
+      const officeLabel = document.createElement("label");
+      officeLabel.className = "destination-group-label";
+      officeLabel.textContent = "Office";
+
+      panel.insertBefore(campLabel, officeContainer);
+      panel.insertBefore(campContainer, officeContainer);
+      panel.insertBefore(officeLabel, officeContainer);
+    }
+
+    return true;
+  }
+
+  function renderCampChips_() {
+    const container = document.getElementById("destinationCampChips");
+    if (!container) return;
+
+    container.replaceChildren();
+
+    CAMPS.forEach(camp => {
+      container.appendChild(
+        makeChip_(
+          camp,
+          ReassignmentState.activeCamp === camp,
+          () => {
+            ReassignmentState.activeCamp =
+              ReassignmentState.activeCamp === camp ? "" : camp;
+            saveReassignmentState_();
+            renderReassignmentWorkspace_();
+          }
+        )
+      );
+    });
+  }
+
+  function allOfficeOptions_() {
+    const officeMap = new Map();
+    const records = Array.isArray(PersonnelState.records)
+      ? PersonnelState.records
+      : [];
+
+    records.forEach(record => {
+      const office = String(
+        record.Office ||
+        record.office ||
+        record["OFFICE"] ||
+        ""
+      ).trim();
+
+      if (!office || office.toUpperCase() === "N/A") return;
+      const key = office.toUpperCase();
+      if (!officeMap.has(key)) officeMap.set(key, office);
+    });
+
+    return [...officeMap.values()].sort((a, b) =>
+      a.localeCompare(b, undefined, {
+        numeric: true,
+        sensitivity: "base",
+      })
+    );
+  }
+
+  function renderOfficeChips_() {
+    const container = document.getElementById("destinationOfficeChips");
+    if (!container) return;
+
+    container.replaceChildren();
+    const offices = allOfficeOptions_();
+
+    offices.forEach(office => {
+      container.appendChild(
+        makeChip_(
+          office,
+          ReassignmentState.activeOffice === office,
+          () => {
+            ReassignmentState.activeOffice =
+              ReassignmentState.activeOffice === office ? "" : office;
+            saveReassignmentState_();
+            renderReassignmentWorkspace_();
+          }
+        )
+      );
+    });
+
+    if (!offices.length) {
+      const empty = document.createElement("small");
+      empty.className = "destination-office-empty";
+      empty.textContent = "No office options are available.";
+      container.appendChild(empty);
+    }
+  }
+
+  function patchRender_() {
+    if (typeof window.renderDestinationChips_ !== "function") return false;
+    if (window.renderDestinationChips_.independentOptionsPatched) return true;
+
+    function patchedRenderDestinationChips_() {
+      ensureDestinationGroups_();
+      renderCampChips_();
+      renderOfficeChips_();
+    }
+
+    patchedRenderDestinationChips_.independentOptionsPatched = true;
+    window.renderDestinationChips_ = patchedRenderDestinationChips_;
+    return true;
+  }
+
+  function patchStatePersistence_() {
+    if (typeof ReassignmentState !== "undefined" && !("activeCamp" in ReassignmentState)) {
+      ReassignmentState.activeCamp = "";
+    }
+
+    if (
+      typeof window.saveReassignmentState_ === "function" &&
+      !window.saveReassignmentState_.campPatched
+    ) {
+      const originalSave = window.saveReassignmentState_;
+      function patchedSave() {
+        originalSave.apply(this, arguments);
+        try {
+          const raw = localStorage.getItem(REASSIGNMENT_STORAGE_KEY);
+          const state = raw ? JSON.parse(raw) : {};
+          state.activeCamp = ReassignmentState.activeCamp || "";
+          localStorage.setItem(REASSIGNMENT_STORAGE_KEY, JSON.stringify(state));
+        } catch (error) {
+          console.warn("Unable to save destination camp:", error);
+        }
+      }
+      patchedSave.campPatched = true;
+      window.saveReassignmentState_ = patchedSave;
+    }
+
+    try {
+      const raw = localStorage.getItem(REASSIGNMENT_STORAGE_KEY);
+      const state = raw ? JSON.parse(raw) : {};
+      if (typeof ReassignmentState !== "undefined") {
+        ReassignmentState.activeCamp = state.activeCamp || ReassignmentState.activeCamp || "";
+      }
+    } catch (ignored) {}
+  }
+
+  function injectStyles_() {
+    if (document.getElementById("destinationCampFilterStyles")) return;
+    const style = document.createElement("style");
+    style.id = "destinationCampFilterStyles";
+    style.textContent = `
+      .destination-group-label {
+        display:block;
+        margin:12px 0 6px;
+        color:#235b31;
+        font-size:11px;
+        font-weight:900;
+        letter-spacing:.08em;
+        text-transform:uppercase;
+      }
+      .destination-camp-chip-list {
+        display:grid;
+        grid-template-columns:repeat(2,minmax(0,1fr));
+        gap:7px;
+      }
+      .destination-camp-chip-list .reassignment-chip:last-child {
+        grid-column:1 / -1;
+      }
+      .destination-office-empty {
+        display:block;
+        padding:8px 2px;
+        color:#6a7b6e;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function install_() {
+    patchStatePersistence_();
+    ensureDestinationGroups_();
+    patchRender_();
+    injectStyles_();
+
+    if (typeof renderReassignmentWorkspace_ === "function") {
+      renderReassignmentWorkspace_();
+    }
+
+    const observer = new MutationObserver(() => {
+      patchStatePersistence_();
+      ensureDestinationGroups_();
+      patchRender_();
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+    });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", install_, { once: true });
+  } else {
+    install_();
+  }
+})();
