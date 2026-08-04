@@ -696,65 +696,56 @@ function generateBOSReport(
         row[9];
 
       //----------------------------------
-      // Copy Formatting G:K -> A:E
+      // Apply BOS Row Formatting
       //----------------------------------
 
-      source
+      const descriptionUpper =
+        String(description || "")
+          .trim()
+          .toUpperCase();
+
+      const greenKeywords = [
+        "BOX",
+        "SCWAY",
+        "SC WWAY",
+        "WWAY",
+        "WIREWAY",
+        "PAD",
+        "PADS",
+      ];
+
+      const isGreenItem =
+        greenKeywords.some(
+          (keyword) =>
+            descriptionUpper.includes(keyword),
+        );
+
+      const rowColor =
+        isGreenItem
+          ? "#d9ead3"
+          : "#ead1dc";
+
+      template
         .getRange(
-          item.sourceRow,
-          7,
+          destRow,
+          1,
           1,
           5,
         )
-        .copyTo(
-          template.getRange(
-            destRow,
-            1,
-          ),
-          SpreadsheetApp
-            .CopyPasteType
-            .PASTE_FORMAT,
-          false,
-        );
-
-      //----------------------------------
-      // B = Same Formatting as A
-      //----------------------------------
-
-      template
-        .getRange(
-          destRow,
-          1,
-        )
-        .copyTo(
-          template.getRange(
-            destRow,
-            2,
-          ),
-          SpreadsheetApp
-            .CopyPasteType
-            .PASTE_FORMAT,
-          false,
-        );
-
-      //----------------------------------
-      // D = Same Formatting as A
-      //----------------------------------
-
-      template
-        .getRange(
-          destRow,
-          1,
-        )
-        .copyTo(
-          template.getRange(
-            destRow,
-            4,
-          ),
-          SpreadsheetApp
-            .CopyPasteType
-            .PASTE_FORMAT,
-          false,
+        .setBackground(rowColor)
+        .setFontColor("#000000")
+        .setFontWeight("normal")
+        .setFontStyle("normal")
+        .setVerticalAlignment("middle")
+        .setBorder(
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          "#000000",
+          SpreadsheetApp.BorderStyle.SOLID,
         );
 
       //----------------------------------
@@ -804,6 +795,9 @@ function generateBOSReport(
         )
         .setValue(
           description,
+        )
+        .setHorizontalAlignment(
+          "left",
         );
 
       template
@@ -813,6 +807,9 @@ function generateBOSReport(
         )
         .setValue(
           catalog,
+        )
+        .setHorizontalAlignment(
+          "left",
         );
 
       template
@@ -1060,65 +1057,56 @@ function generateVANReport(
         row[9];
 
       //----------------------------------
-      // Copy Formatting G:K
+      // Apply VAN Row Formatting
       //----------------------------------
 
-      source
+      const descriptionUpper =
+        String(description || "")
+          .trim()
+          .toUpperCase();
+
+      const greenKeywords = [
+        "BOX",
+        "SCWAY",
+        "SC WWAY",
+        "WWAY",
+        "WIREWAY",
+        "PAD",
+        "PADS",
+      ];
+
+      const isGreenItem =
+        greenKeywords.some(
+          (keyword) =>
+            descriptionUpper.includes(keyword),
+        );
+
+      const rowColor =
+        isGreenItem
+          ? "#d9ead3"
+          : "#ead1dc";
+
+      template
         .getRange(
-          item.sourceRow,
+          destRow,
           7,
           1,
           5,
         )
-        .copyTo(
-          template.getRange(
-            destRow,
-            7,
-          ),
-          SpreadsheetApp
-            .CopyPasteType
-            .PASTE_FORMAT,
-          false,
-        );
-
-      //----------------------------------
-      // H = Same Formatting as G
-      //----------------------------------
-
-      template
-        .getRange(
-          destRow,
-          7,
-        )
-        .copyTo(
-          template.getRange(
-            destRow,
-            8,
-          ),
-          SpreadsheetApp
-            .CopyPasteType
-            .PASTE_FORMAT,
-          false,
-        );
-
-      //----------------------------------
-      // J = Same Formatting as G
-      //----------------------------------
-
-      template
-        .getRange(
-          destRow,
-          7,
-        )
-        .copyTo(
-          template.getRange(
-            destRow,
-            10,
-          ),
-          SpreadsheetApp
-            .CopyPasteType
-            .PASTE_FORMAT,
-          false,
+        .setBackground(rowColor)
+        .setFontColor("#000000")
+        .setFontWeight("normal")
+        .setFontStyle("normal")
+        .setVerticalAlignment("middle")
+        .setBorder(
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          "#000000",
+          SpreadsheetApp.BorderStyle.SOLID,
         );
 
       //----------------------------------
@@ -1168,6 +1156,9 @@ function generateVANReport(
         )
         .setValue(
           description,
+        )
+        .setHorizontalAlignment(
+          "left",
         );
 
       template
@@ -1177,6 +1168,9 @@ function generateVANReport(
         )
         .setValue(
           catalog,
+        )
+        .setHorizontalAlignment(
+          "left",
         );
 
       template
