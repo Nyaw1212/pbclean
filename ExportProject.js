@@ -1,4 +1,70 @@
 //----------------------------------
+// Export Menu Installer
+//----------------------------------
+
+function installPanelBuilderExportMenu() {
+
+  const spreadsheet =
+    SpreadsheetApp.getActiveSpreadsheet();
+
+  const existingTriggers =
+    ScriptApp.getProjectTriggers();
+
+  const alreadyInstalled =
+    existingTriggers.some(
+      trigger =>
+        trigger.getHandlerFunction() ===
+        "showPanelBuilderExportMenu_"
+    );
+
+  if (!alreadyInstalled) {
+
+    ScriptApp
+      .newTrigger(
+        "showPanelBuilderExportMenu_"
+      )
+      .forSpreadsheet(
+        spreadsheet
+      )
+      .onOpen()
+      .create();
+
+  }
+
+  showPanelBuilderExportMenu_();
+
+  spreadsheet.toast(
+    alreadyInstalled
+      ? "Export menu is already installed."
+      : "Export menu installed successfully.",
+    "Panel Builder",
+    5
+  );
+
+}
+
+
+//----------------------------------
+// Export Menu
+//----------------------------------
+
+function showPanelBuilderExportMenu_() {
+
+  SpreadsheetApp
+    .getUi()
+    .createMenu(
+      "Panel Builder Export"
+    )
+    .addItem(
+      "Export Template + Material List",
+      "exportTemplateAndMaterialList"
+    )
+    .addToUi();
+
+}
+
+
+//----------------------------------
 // Export Template + Material List
 //----------------------------------
 
