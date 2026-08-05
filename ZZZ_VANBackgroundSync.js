@@ -2,8 +2,9 @@
 // VAN Background Sync
 //----------------------------------
 // Keeps the left BOS table unchanged.
-// After the normal VAN report is generated, this copies only
-// the G:K background colors from the matching Material List row.
+// After the normal VAN report is generated, this reads the
+// background color from Material List column G and applies
+// that same color across the matching VAN report row G:K.
 
 const generateVANReportBase_ = generateVANReport;
 
@@ -12,7 +13,7 @@ generateVANReport = function(showAlert = true) {
   // Generate the existing VAN report first.
   generateVANReportBase_(false);
 
-  // Then restore the VAN row backgrounds from Material List.
+  // Then restore the VAN row colors from Material List.
   syncVANBackgroundsFromMaterialList_();
 
   if (showAlert) {
@@ -28,7 +29,7 @@ generateVANReport = function(showAlert = true) {
 
 
 //----------------------------------
-// Copy VAN Backgrounds
+// Copy VAN Background Colors
 //----------------------------------
 
 function syncVANBackgroundsFromMaterialList_() {
@@ -58,7 +59,7 @@ function syncVANBackgroundsFromMaterialList_() {
   // Material List columns used:
   // D = Catalog / SKU
   // F = Description
-  // G:K = Background format source
+  // G = Row background color source
   //----------------------------------
 
   const sourceValues =
@@ -67,7 +68,7 @@ function syncVANBackgroundsFromMaterialList_() {
         2,
         1,
         sourceLastRow - 1,
-        Math.max(sourceSheet.getLastColumn(), 11)
+        Math.max(sourceSheet.getLastColumn(), 7)
       )
       .getDisplayValues();
 
@@ -77,7 +78,7 @@ function syncVANBackgroundsFromMaterialList_() {
         2,
         7,
         sourceLastRow - 1,
-        5
+        1
       )
       .getBackgrounds();
 
@@ -95,10 +96,13 @@ function syncVANBackgroundsFromMaterialList_() {
     const combinedKey =
       `${catalog}|${description}`;
 
+    const rowColor =
+      sourceBackgrounds[index][0];
+
     if (!sourceLookup.has(combinedKey)) {
       sourceLookup.set(
         combinedKey,
-        sourceBackgrounds[index]
+        rowColor
       );
     }
 
@@ -109,7 +113,7 @@ function syncVANBackgroundsFromMaterialList_() {
     ) {
       sourceLookup.set(
         `CATALOG:${catalog}`,
-        sourceBackgrounds[index]
+        rowColor
       );
     }
   });
@@ -155,16 +159,17 @@ function syncVANBackgroundsFromMaterialList_() {
     const combinedKey =
       `${normalizedCatalog}|${normalizedDescription}`;
 
-    const backgrounds =
+    const rowColor =
       sourceLookup.get(combinedKey) ||
       sourceLookup.get(
         `CATALOG:${normalizedCatalog}`
       );
 
-    if (!backgrounds) {
+    if (!rowColor) {
       continue;
     }
 
+    // Apply the single Material List G background across VAN G:K.
     templateSheet
       .getRange(
         rowNumber,
@@ -172,9 +177,7 @@ function syncVANBackgroundsFromMaterialList_() {
         1,
         5
       )
-      .setBackgrounds([
-        backgrounds
-      ]);
+      .setBackground(rowColor);
   }
 
   SpreadsheetApp.flush();
