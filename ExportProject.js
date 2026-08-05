@@ -109,16 +109,22 @@ function exportTemplateAndMaterialList() {
       .trim()
       .replace(/[\\/:*?"<>|]/g, "-");
 
-  const timestamp =
-    Utilities.formatDate(
-      new Date(),
-      Session.getScriptTimeZone(),
-      "yyyy-MM-dd HHmm"
-    );
-
   const exportSpreadsheet =
     SpreadsheetApp.create(
-      `${jobName} - Material Report - ${timestamp}`
+      `${jobName} Used Materials`
+    );
+
+  //----------------------------------
+  // Share: Anyone with Link (Viewer)
+  //----------------------------------
+
+  DriveApp
+    .getFileById(
+      exportSpreadsheet.getId()
+    )
+    .setSharing(
+      DriveApp.Access.ANYONE_WITH_LINK,
+      DriveApp.Permission.VIEW
     );
 
   const copiedTemplate =
@@ -193,6 +199,8 @@ function exportTemplateAndMaterialList() {
       exportSpreadsheet.getName(),
     spreadsheetUrl:
       exportUrl,
+    sharing:
+      "Anyone with the link can view",
   };
 
 }
@@ -250,14 +258,15 @@ function showExportCompleteDialog_(
       .createHtmlOutput(
         `<div style="font-family:Arial,sans-serif;padding:18px;line-height:1.45">` +
         `<h3 style="margin:0 0 10px">Export complete</h3>` +
-        `<p style="margin:0 0 16px">${escapedName}</p>` +
+        `<p style="margin:0 0 8px">${escapedName}</p>` +
+        `<p style="margin:0 0 16px;color:#526078;font-size:13px">Anyone with the link can view.</p>` +
         `<a href="${escapedUrl}" target="_blank" ` +
         `style="display:inline-block;padding:10px 14px;background:#1769e0;color:#fff;text-decoration:none;border-radius:6px;font-weight:700">` +
         `Open new spreadsheet</a>` +
         `</div>`
       )
       .setWidth(420)
-      .setHeight(190);
+      .setHeight(210);
 
   SpreadsheetApp
     .getUi()
