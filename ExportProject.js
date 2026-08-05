@@ -96,7 +96,7 @@ function exportTemplateAndMaterialList() {
     );
   }
 
-  const jobName =
+  let jobName =
     String(
       templateSheet
         .getRange("A2")
@@ -105,9 +105,15 @@ function exportTemplateAndMaterialList() {
         .getRange("O1")
         .getDisplayValue() ||
       "Panel Builder Export"
+    ).trim();
+
+  jobName = jobName
+    .replace(
+      /^Project\s*Name\s*[:\-]\s*/i,
+      ""
     )
-      .trim()
-      .replace(/[\\/:*?"<>|]/g, "-");
+    .replace(/[\\/:*?"<>|]/g, "-")
+    .trim();
 
   const exportSpreadsheet =
     SpreadsheetApp.create(
